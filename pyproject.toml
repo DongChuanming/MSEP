@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "MSEP"
 version = "0.0.1"
 authors = [
-  { name="Chuanming DONG", email="donghuanming@yahoo.com" },
+  { name="Chuanming DONG", email="chuanming.dong@univ-rennes.fr" },
 ]
 description = "A pipeline for extracting patients' medical status information from clinical documents"
 readme = "README.md"
@@ -19,8 +19,8 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 
 [project.urls]
-Homepage = "https://github.com/DongChuanming/MSEP"
-Issues = "https://github.com/DongChuanming/MSEP/issues"
+Homepage = "https://gitlab.com/ltsi-dms/data-science/recherche-developpement/msep/"
+Issues = "https://gitlab.com/ltsi-dms/data-science/recherche-developpement/msep/issues"
 
 
 
