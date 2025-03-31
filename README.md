@@ -18,12 +18,12 @@ Here is an example of how the pipeline is constructed step by step.
 
 1. Preprocessing (PP)
 
-The goal is mainly segmente the text in medical documents into sentences. Use model of your choice to realise this step. Our team also developped a package to realise the text preprocessing based on the quality of our text resources : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
+The goal is mainly to segmente the text in medical documents into sentences. Use model of your choice to realise this step. Our team also developped a package to realise the text preprocessing based on the quality of our text resources : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
 
 
 2. Document selection (S1)
 
-Only performed when all medical documents in your data warehouse can not be peocessed at once. Select a reasonable number of documents based on your criteria.
+Only performed when all medical documents in your data warehouse can not be processed at once. Select a reasonable number of documents based on your criteria.
 
 3. Pre-annotation (PA)
 
@@ -75,7 +75,7 @@ label = preannotate_any(your_sentence, your_list_of_keywords, list_neg=your_list
 All prefix end with a space " ", and all suffix begin with a space " ".
 
 
-4.Sentence slection (S2)
+4.Sentence selection (S2)
 
 First, you need to learn the sample density in your data to decide wether it is necessary to filter out non-sample sentences to increase sample density.
 
