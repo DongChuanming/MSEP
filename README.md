@@ -16,16 +16,11 @@ The package and his dependencies are installed.
 
 Here is an example of how the pipeline is constructed step by step.
 
-1. Preprocessing (PP)
+### 1. Preprocessing (P2)
 
-The goal is mainly to segmente the text in medical documents into sentences. Use model of your choice to realise this step. Our team also developped a package to realise the text preprocessing based on the quality of our text resources : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
+The goal is mainly segmente the text in medical documents into sentences. Use model of your choice to realise this step. Our team also developped a package to realise the text preprocessing based on the quality of our text resources : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
 
-
-2. Document selection (S1)
-
-Only performed when all medical documents in your data warehouse can not be processed at once. Select a reasonable number of documents based on your criteria.
-
-3. Pre-annotation (PA)
+### 2. Pre-annotation (D1)
 
 MSEP provides a set of rule-based functions for annotating sentences as confirmation/negation of the presence of one of these medical conditions : smoking, diabetes, hypertension, heart failure, COPD and family history of cancer. 
 The functions return a number as the label of status: 
@@ -75,7 +70,7 @@ label = preannotate_any(your_sentence, your_list_of_keywords, list_neg=your_list
 All prefix end with a space " ", and all suffix begin with a space " ".
 
 
-4.Sentence selection (S2)
+### 3.Sentence slection (D2)
 
 First, you need to learn the sample density in your data to decide wether it is necessary to filter out non-sample sentences to increase sample density.
 
@@ -116,7 +111,7 @@ seletced_sentences=sample_sentence_selection(pre-annotated_sentences, category_s
 ```
 In this cas, in argument "category_selection_ratio" you should indicate the exact number of sentences to select for a medical status instead of proportion.
 
-5.Manual annotation (M1)
+### 4.Manual annotation (M1)
 
 Format your selected pre-annotated sentences according to the format of your chosen manual annotation tool. 
 
@@ -152,7 +147,7 @@ from msep.manual_annotation_utils import read_annotated_result
 annotation=read_annotated_result(path_to_annotated_file)
 
 ```
-6.Automatic conflictual annotation detection (E1)
+### 5.Automatic conflictual annotation detection (M2)
 You can calculate the inter-annotator agreements using "cohen_kappa_annotator_agreement" if you have two annotators who annotated the same sentences
 
 ```
@@ -164,7 +159,7 @@ agreement_score = cohen_kappa_annotator_agreement(annotation_file1, annotation_f
 
 it returns the score, and a list containing the differences of the annotation results
 
-7.Semi-automatic harmonisation (SC)
+### 6.Semi-automatic harmonisation (M4)
 If you want to correct the result by adding sentences with key words that shoud have been considered as medical status samples (provide a list of key words "ajout"), or delete sentences with false key words that should have not be considered as samples (provide a list of key words "supprime"), use the function "correction"
 
 ```
@@ -175,7 +170,7 @@ corrected_annotation = correction(annotation_to_be_corrected, ajout, supprime)
 ```
 
 
-8.Training & validating datasets partition (S3)
+### 7.Training & validating datasets partition (C1,C2)
 To generate the training & validating datasets for cross validation, first, the annotated sentences need to be grouped by status
 
 ```
@@ -224,7 +219,7 @@ tokenized_data, data_collator = dataset_formatting_for_finetuning(dic_train, dic
 ```
 this will generate the "tokenized_data" and "data_collator" that are called by the language model Trainer
 
-9.Validating (E2)
+### 8.Validating (C3)
 
 First, define two variables that will be called when you initiate an instance of the pre-trained model : "id2label" and "label2id", which correspond respectively the label id to label name, and the name to the id. 
 For example, for training our smoking extractors, we set the variables as :
@@ -346,7 +341,7 @@ labels = medical_status_annotation_iter(path_to_the_saved_model, list_of_sentenc
 ```
 
 
-10.Model assessement (E3)
+### 9.Model assessement (C4)
 
 As comparison, we've also designed LLM prompts for medical status extraction:
 - prompt_template_taba, for extracting smoking status
@@ -374,6 +369,11 @@ sentence_labels=llm_annotate(list_of_sentences, prompt_template_of_your_choice, 
 ```
 
 The function returns a list containing lists of a sentence and its label, e.g. [[sentence1, label1], [sentence2, label2]...[sentenceN, labelN]]
+
+
+
+
+
 
 
 
