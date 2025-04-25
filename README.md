@@ -1,6 +1,6 @@
 # MSEP : A pipeline for medical status extraction
 
-This package contains functions used to construct the MSEP pipeline for extracting medical status. Image pipeline_structure.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep"
+This package contains functions used to construct the MSEP pipeline for extracting medical status. Image MSEP_organigramme_full.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep"
 
 ## Installation
 Place you in the directory of your choice
