@@ -11,6 +11,21 @@ pip install msep-0.0.1-py3-none-any.whl
 ```
 The package and his dependencies are installed.
 
+## Package structure and corresponding steps in the pipeline
+    
+    Modules                                                     Steps in pipeline
+    
+    ./src
+    ├── ...
+    ├── msep                    
+    │   ├── preannotation_rules ................................Pre-annotation (D1)
+    │   ├── data_selection         # Load and stress tests
+    │   ├── manual_annotation_utils         # End-to-end, integration tests (alternatively `e2e`)
+    │   ├── cross_validation               # Unit tests
+    │   ├── concurrent_LLM_extrators
+    │   └── CamemBERT_medical_status_extractors
+    └── ...
+
 
 ## Usage
 
