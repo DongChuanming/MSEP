@@ -1,6 +1,6 @@
 # MSEP : A pipeline for medical status extraction
 
-This package contains functions used to construct the MSEP pipeline for extracting medical status. Image MSEP_ordinogramme_full.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep"
+This package contains functions used to construct the MSEP pipeline for extracting medical status. Image MSEP_ordinogramme.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep"
 
 ## Installation
 Place you in the directory of your choice
@@ -9,21 +9,28 @@ Then install the package from the wheel file (in the folder ./dist)
 ```
 pip install msep-0.0.1-py3-none-any.whl
 ```
-The package and his dependencies are installed.
+The package and its dependencies are installed.
 
-## Package structure and corresponding steps in the pipeline
+## Package structure and corresponding steps in MSEP
+The following scheme shows the structure of modules in the package, and for which steps in MSEP pipeline they are used. 
     
-    Modules                                                     Steps in pipeline
+    Modules                                                      Steps in pipeline
     
     ./src
     ├── ...
     ├── msep                    
-    │   ├── preannotation_rules ................................Pre-annotation (D1)
-    │   ├── data_selection         # Load and stress tests
-    │   ├── manual_annotation_utils         # End-to-end, integration tests (alternatively `e2e`)
-    │   ├── cross_validation               # Unit tests
-    │   ├── concurrent_LLM_extrators
-    │   └── CamemBERT_medical_status_extractors
+    │   ├── preannotation_rules ................................ Pre-annotation (D1) & Performance Comparison and Assessment (C4)
+    │   ├── data_selection ..................................... Filter Sentences (D2)         
+    │   ├── manual_annotation_utils ............................ Manual Annotation & Correction
+    │   │   ├── prodigy_input_generator ........................ Annotation by Medical Specialists (M1)
+    │   │   ├── cohen_kappa_annotator_agreement ................ Calculate Inter-annotator Agreement (M2) & Disagreement Analysis (M3)
+    │   │   └── correction ..................................... Annotation Correction (M4)
+    │   ├── cross_validation  .................................. Model Training & Cross Validation
+    │   │   ├── stratified_data_split .......................... Split Data into N Groups (C1)
+    │   │   ├── dataset_formatting_for_finetuning .............. Train/Fine-tune Model (C2)
+    │   │   └── compute_metrics ................................ Evaluate Performance (C3)
+    │   ├── concurrent_LLM_extrators ........................... Performance Comparison and Assessment (C4)
+    │   └── CamemBERT_medical_status_extractors ................ Performance Comparison and Assessment (C4)
     └── ...
 
 
@@ -37,7 +44,7 @@ The goal is mainly segmente the text in medical documents into sentences. Use mo
 
 ### 2. Pre-annotation (D1)
 
-MSEP provides a set of rule-based functions for annotating sentences as confirmation/negation of the presence of one of these medical conditions : smoking, diabetes, hypertension, heart failure, COPD and family history of cancer. 
+MSEP provides a set of rule-based functions in preannotation_rules module for annotating sentences as confirmation/negation of the presence of one of these medical conditions : smoking, diabetes, hypertension, heart failure, COPD and family history of cancer. 
 The functions return a number as the label of status: 
 - "0": indifference, meaning the sentence does not give information about the medical condition's presence/absence; 
 - "1": absence, meaning the sentence confirms the absence of the condition within the patient; 

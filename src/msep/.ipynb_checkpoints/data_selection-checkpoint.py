@@ -85,8 +85,8 @@ def show_sample_indiff(dict_txt_label, samples=["1","2","3"]):
     
     assert len(texts)==len(labels), "number of sentences and labels doesn't match"
     
-    samples=dict()
-    indiff=dict()
+    samples={"texts":[], "labels":[]}
+    indiff={"texts":[], "labels":[]}
     
     for i in range(len(texts)):
         if labels[i] not in samples:
