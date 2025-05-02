@@ -1,6 +1,7 @@
 # MSEP : A pipeline for medical status extraction
 
-This package contains functions used to construct the MSEP pipeline for extracting medical status. Image MSEP_ordinogramme.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep"
+This package contains functions used to construct the MSEP pipeline for extracting medical status. Image MSEP_ordinogramme.jpg in this depository shows the steps in the pipeline, which you can realise using the modules in "./src/msep" :
+![MSEP steps](MSEP_ordinogramme.jpg)
 
 ## Installation
 Place you in the directory of your choice
@@ -44,27 +45,27 @@ Here is an example of how the pipeline is constructed step by step.
 The goal is mainly segmente the text in medical documents into sentences. Use model of your choice to realise this step. 
 If you want to use spaCy to perform sentence segmentation, and have installed its corresponding language models (ex. fr_dep_news_trf for French), the module _preprocessing_ can facilitate the process :
 ```
-from preprocessing import sentence_segmentation
+from msep.preprocessing import sentence_segmentation
 
 sentence_list = sentence_segmentation("test.txt", "fr_dep_news_trf")
 ```
 The function takes a text file and returns a list of sengmented sentences, using the spaCy model indicated in the arguments. 
 You can indicate an output file to save the segmented sentences:
 ```
-from preprocessing import sentence_segmentation
+from msep.preprocessing import sentence_segmentation
 
 sentence_list = sentence_segmentation("test.txt", "fr_dep_news_trf", output="output.txt")
 ```
 The function can also take a folder (ex. test) containing multiple text files and returns a list of sengmented sentences, and you can indicate an output folder (ex. output) to save the output files containing segmented sentences:
 
 ```
-from preprocessing import sentence_segmentation
+from msep.preprocessing import sentence_segmentation
 
 sentence_list = sentence_segmentation("test", "fr_dep_news_trf", output="output")
 ```
 You can also uniform the sentences into a cleaner format, i.e. lower case and no diacritics :
 ```
-from preprocessing import sentence_segmentation
+from msep.preprocessing import sentence_segmentation
 
 sentence_list = sentence_segmentation("test", "fr_dep_news_trf", output="output", uniform=True)
 ```
@@ -120,17 +121,35 @@ label = preannotate_any(your_sentence, your_list_of_keywords, list_neg=your_list
 ```
 All prefix end with a space " ", and all suffix begin with a space " ".
 
+Here is a complete example of how to use _preannotate_any_ function to extract kidney failure status:
+```
+from msep.preannotation_rules import preannotate_any 
+import unidecode 
+
+id2label = { "0": "indifferent", "1": "absence_irc", "2": "presence_irc"} 
+keywords_irc = [ "insuffisance renale chronique", "insuffisance renale", "irc", "maladie renale chronique", "mrc" ] 
+neg_prefixes = ["pas d'", "pas", "absence de", "pas de", "aucune", "sans"] 
+neg_suffixes = ["non retrouvé", "non trouve", "absent", "non présent"] 
+
+sentence = "Le patient ne présente pas d'insuffisance rénale."
+
+label = preannotate_any( sentence, keywords_irc, list_neg=neg_prefixes, list_neg_post=neg_suffixes) 
+
+print("Annotation :", id2label[str(label)]) 
+
+```
+
 
 ### 3.Filter Sentences (D2)
 
 First, you need to learn the sample density in your data to decide wether it is necessary to filter out non-sample sentences to increase sample density.
 
-To do that, input pre-annotated sentences (in form of a dictionary that contains a list respectively for sentences, their annotation, and their id defined by you for easy data source trace-back {"texts": [sentence1, sentence2, ... sentenceN], "labels": [label1, label2, ... labelN], "sent_ids":[id1,id2,...idN]}) to the function "show_sample_indiff"
+To do that, input pre-annotated sentences to the function _show_sample_indiff_. The input should be in form of a dictionary that contains a list respectively for sentences, their pre-annotation labels, and their id defined by you for easy data source trace-back {"texts": [sentence1, sentence2, ... sentenceN], "labels": [label1, label2, ... labelN], "sent_ids":[id1,id2,...idN]}
 
 ```
 from msep.data_selection import show_sample_indiff
 
-show_sample_indiff(pre-annotated_sentences)
+show_sample_indiff(pre_annotated_sentences)
 
 ```
 This will print the percentage of samples (by default it concerns the presence/absence/former status of a medical condition) and non samples (by default it is indifference)
@@ -139,28 +158,44 @@ You can also define your own criteria for samples by indicating the label of sta
 ```
 from msep.data_selection import show_sample_indiff
 
-show_sample_indiff(pre-annotated_sentences, samples=["2","3"])
+show_sample_indiff(pre_annotated_sentences, samples=["2","3"])
 
 ```
 
-If you need to filter out sentences of certain status (indifference for example) to balance the sample density among all status, use the function "sample_sentence_selection", and indicate the type of status you want to select and the ratio for its selection in "category_selection_ratio" argument (ratio < 1 means keep a "ratio" of the sentences correspending to the status and filter out the rest, ratio >1 means multiply the sentences of this status according to the ratio). For example, category_selection_ratio = {"0" : 0.1, "1" : 2} means select 10% of indifferent sentences (labeled with "0"), and double the samples of absence of medical status (labeled with "1")
+If you need a more detailed inspect into the proportion of different medical status samples in your dataset, you can call the function _show_status_prop_:
+
+```
+from msep.data_selection import show_status_prop
+
+show_status_prop(pre_annotated_sentences)
+
+```
+it returns a dictionary with each status label in your dataset as the key, and with a list of corresponding sentences as the value, and it prints the proportion and number of each satus in your dataset:
+```
+there are 3 types of medical status in the dataset
+status 2: number:4 proportion:40.0%
+status 1: number:4 proportion:40.0%
+status 0: number:2 proportion:20.0%
+```
+
+If you need to filter out sentences of certain status (indifference for example) to balance the sample density among all status, use the function _sample_sentence_selection_, and indicate the type of status you want to select and the ratio for its selection in _category_selection_ratio_ argument (ratio < 1 means keep a "ratio" of the sentences correspending to the status and filter out the rest, ratio >1 means multiply the sentences of this status according to the ratio). For example, category_selection_ratio = {"0" : 0.1, "1" : 2} means select 10% of indifferent sentences (labeled with "0"), and double the samples of absence of medical status (labeled with "1")
 
 ```
 from msep.data_selection import sample_sentence_selection
 
-seletced_sentences=sample_sentence_selection(pre-annotated_sentences, category_selection_ratio)
+seletced_sentences=sample_sentence_selection(pre_annotated_sentences, category_selection_ratio)
 
 ```
 
-By default, the function selects sentences based on proportion, it can also select by number if you indicate the selecting function as "sample_selection_by_number"
+By default, the function selects sentences based on proportion, it can also select by number if you indicate the selecting function as _sample_selection_by_number_
 
 ```
-from msep.data_selection import sample_sentence_selection
+from msep.data_selection import sample_sentence_selection, sample_selection_by_number
 
-seletced_sentences=sample_sentence_selection(pre-annotated_sentences, category_selection_ratio, selecting_function=sample_selection_by_number)
+seletced_sentences=sample_sentence_selection(pre_annotated_sentences, category_selection_ratio, selecting_function=sample_selection_by_number)
 
 ```
-In this cas, in argument "category_selection_ratio" you should indicate the exact number of sentences to select for a medical status instead of proportion.
+In this cas, in argument _category_selection_ratio_ you should indicate the exact number of sentences to select for a medical status instead of proportion.
 
 ### 4.Annotation by Medical Specialists (M1)
 
@@ -250,7 +285,7 @@ from msep.cross_validation import save_training_validating_datasets
 save_training_validating_datasets(all_rec, saving_location)
 
 ```
-For the n sets of sentences split by function "stratified_data_split",  "save_training_validating_datasets" select one set each time to save it as the validating set, and combine the rest n-1 sets as the training set. It repeat this operation for n times, and each time the training & validating sets are saved files whose name indicate the session during which they are generated. For example, the first pair of training & validating sets are registered in files "training_set_0.pickle" and "validating_set_0.pickle", and the second pair are in files "training_set_1.pickle" and "validating_set_1.pickle".
+For the n sets of sentences split by function _stratified_data_split_,  _save_training_validating_datasets_ select one set each time to save it as the validating set, and combine the rest n-1 sets as the training set. It repeat this operation for n times, and each time the training & validating sets are saved files whose name indicate the session during which they are generated. For example, the first pair of training & validating sets are registered in files "training_set_0.pickle" and "validating_set_0.pickle", and the second pair are in files "training_set_1.pickle" and "validating_set_1.pickle".
 
 You can read the saved datasets like this :
 
@@ -261,7 +296,7 @@ with open(saving_location+"validating_set_0.pickle", 'rb') as tst:
     dic_test=pickle.load(tst)
 ```
 
-Use function "dataset_formatting_for_finetuning" to format the datasets as compatible input for finetuning a pre-trained language model. Indicate the location of the pre-trained language model to be used for tokenization (this should be the same model you want to fine-tune) in the argument "path_to_pretrained_language_model"
+Use function _dataset_formatting_for_finetuning_ to format the datasets as compatible input for finetuning a pre-trained language model. Indicate the location of the pre-trained language model to be used for tokenization (this should be the same model you want to fine-tune) in the argument _path_to_pretrained_language_model_
 
 ```
 from msep.cross_validation import dataset_formatting_for_finetuning
@@ -269,9 +304,9 @@ from msep.cross_validation import dataset_formatting_for_finetuning
 tokenized_data, data_collator = dataset_formatting_for_finetuning(dic_train, dic_test, path_to_pretrained_language_model)
 
 ```
-this will generate the "tokenized_data" and "data_collator" that are called by the language model Trainer
+this will generate the _tokenized_data_ and _data_collator_ that are called by the language model Trainer
 
-### 8.Validating (C3)
+### 8.Evaluate Performance (C3)
 
 First, define two variables that will be called when you initiate an instance of the pre-trained model : "id2label" and "label2id", which correspond respectively the label id to label name, and the name to the id. 
 For example, for training our smoking extractors, we set the variables as :
@@ -280,7 +315,7 @@ id2label = {0: "indifferent", 1: "absence", 2:"presence", 3:"former",}
 label2id = {"indifferent": 0, "absence": 1, "presence":2, "former":3}  
 ```
 
-Our customized matrics for validating the extractors are defined in the function "compute_metrics". It takes a couple of lists containing respectively the labels predicted by the extractors, and the correct labels given by annotators. It returns as result the f-score, precision, recall and specificity for each medical status, 
+Our customized matrics for validating the extractors are defined in the function _compute_metrics_. It takes a pair of lists, containing respectively the labels predicted by the extractors, and the correct labels given by annotators. It returns as result the f-score, precision, recall and specificity for each medical status, 
 and macro f-score, balalced accuracy for all status.
 
 
@@ -295,7 +330,7 @@ validating_score = compute_metrics((automatically_annotated_labels, manually_ann
 
 You can also weight your loss function if you find the annotated data have unbalanced samples for different status.
 
-First, use "produce_weights" to produce a list of weights 
+First, use _produce_weights_ function to produce a list of weights 
 
 ```
 from msep.cross_validation import data_grouping_by_status, stratified_data_split, produce_weights
@@ -304,7 +339,7 @@ data=data_grouping_by_status(corrected_annotation)
 all_rec=stratified_data_split(n, data)
 balanced_weights=produce_weights(all_rec)
 ```
-It gives each status a weight = 1/(its proportion among all status). The order of the weight is the same as the order of status in "all_rec", and should be the same as the order of status in id2label and label2id.
+It gives each status a weight = 1/(its proportion among all status). The order of the weight is the same as the order of status in _all_rec_, and should be the same as the order of status in id2label and label2id.
 
 Once the list of weights are generated, you can customize your trainer this way :
 ```
@@ -320,7 +355,7 @@ class CustomTrainer(Trainer):
         return (loss, outputs) if return_outputs else loss
 ```
 
-Once you've generated the "tokenized_data", "data_collator", defined "compute_metrics", you can call a language model (that can perform sequence classification task) and configure a trainer for fine-tuning it (define a " model_saving_location" to save the trained model):
+Once you've generated the _tokenized_data_, _data_collator_, and defined _compute_metrics_, you can call a language model (that can perform sequence classification task) and configure a trainer for fine-tuning it (define a _model_saving_location_ to save the trained model):
 
 ```
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, TrainingArguments, Trainer
@@ -364,7 +399,7 @@ trainer.train()
 
 
 The trainer will train and validate the models, and print the metric scores.
-Collect scores from all sessions of cross validation of the same metric, then you can use function "mean_std" to calculate the average score and standard deviation for this metric.
+Collect scores from all sessions of cross validation of the same metric, then you can use function _mean_std_ to calculate the average score and standard deviation for this metric.
 
 ```
 from msep.cross_validation import mean_std
@@ -393,7 +428,7 @@ labels = medical_status_annotation_iter(path_to_the_saved_model, list_of_sentenc
 ```
 
 
-### 9.Model assessement (C4)
+### 9.Performance Comparison and Assessment (C4)
 
 As comparison, we've also designed LLM prompts for medical status extraction:
 - prompt_template_taba, for extracting smoking status

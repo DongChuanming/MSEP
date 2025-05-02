@@ -20,11 +20,13 @@ def sample_selection_by_proportion(s, ratio):
     random.shuffle(s)
     total=len(s)
     if n<total:
-        if n>=1:
-            times=round(total/n)
-            for i in range(times):
+        if ratio<1:
+            number=round(total*ratio)
+            spam=round(total/number)
+            #times=round(total/n)
+            for i in range(number):
                 try:
-                    ns.append(s[i*n])
+                    ns.append(s[i*spam])
                 except:
                     return ns
         else:
@@ -65,7 +67,7 @@ def sample_selection_by_number(s, n):
 
 
 
-def show_sample_indiff(dict_txt_label, samples=["1","2","3"]):
+def show_sample_indiff(dict_txt_label, sample_ids=["1","2","3"]):
     """
     calculate the proportion of samples and non-samples of medical status in the list of annotated sentences dict_text_label:
     {"texts": [sent1, sent2, ... sentN], "labels": [label1, label2, ... labelN]};
@@ -75,8 +77,7 @@ def show_sample_indiff(dict_txt_label, samples=["1","2","3"]):
     dict_txt_label: the dictionary containing the sentences and their labels in at least this format : 
     {"texts": [sent1, sent2, ... sentN], "labels": [label1, label2, ... labelN]};
     
-    samples: the list of labels that represent medical status samples. By default, "0" marks the non-sample sentences. you can define your own list of labels of 
-    samples defined in your project
+    sample_ids: the list of labels that represent medical status samples. By default, "0" marks the non-sample sentences. you can define your own list of labels of samples defined in your project
     
     """
     
@@ -89,7 +90,7 @@ def show_sample_indiff(dict_txt_label, samples=["1","2","3"]):
     indiff={"texts":[], "labels":[]}
     
     for i in range(len(texts)):
-        if labels[i] not in samples:
+        if labels[i] not in sample_ids:
             indiff["texts"]=indiff.get("texts", [])+[texts[i]]
             indiff["labels"]=indiff.get("labels", [])+[labels[i]]
             
@@ -108,7 +109,48 @@ def show_sample_indiff(dict_txt_label, samples=["1","2","3"]):
     return sample_indiff_pair
             
 
-
+def show_status_prop(dict_txt_label, duplication=True):
+    """
+    calculate the proportion of samples and non-samples of medical status in the list of annotated sentences dict_text_label:
+    {"texts": [sent1, sent2, ... sentN], "labels": [label1, label2, ... labelN]};
+    
+    arguments:
+    
+    dict_txt_label: the dictionary containing the sentences and their labels in at least this format : 
+    {"texts": [sent1, sent2, ... sentN], "labels": [label1, label2, ... labelN]};
+    
+    sample_ids: the list of labels that represent medical status samples. By default, "0" marks the non-sample sentences. you can define your own list of labels of samples defined in your project
+    
+    """
+    
+    texts=dict_txt_label["texts"]
+    labels=dict_txt_label["labels"]
+    
+    assert len(texts)==len(labels), "number of sentences and labels doesn't match"
+    
+    total=len(texts)
+    
+    nstatus=dict()
+    
+    for i in range(total):
+        lb=labels[i]
+        txt=texts[i]
+        nstatus[lb]=nstatus.get(lb, [])+[txt.strip()]
+    print("there are "+str(len(nstatus))+" types of medical status in the dataset")
+    
+    for k in nstatus:
+        if not duplication:
+            v=nstatus[k]
+            nstatus[k]=list(set(v))
+            ratio=round(len(nstatus[k])/len(set(texts)),2)*100
+        else:
+            ratio=round(len(nstatus[k])/total,2)*100
+        
+        print("status "+str(k)+": number:"+str(len(nstatus[k]))+" proportion:"+str(ratio)+"%")
+    
+    return nstatus
+        
+    
 
 
 
@@ -139,7 +181,7 @@ def sample_sentence_selection(dict_txt_label, category_selection_ratio, selectin
     sent_ids=dict_txt_label["sent_ids"]
     
     assert len(texts)==len(labels), "number of sentences and labels doesn't match"
-    assert len(texts)==len(sentence_ids), "number of sentences and ids doesn't match"
+    assert len(texts)==len(sent_ids), "number of sentences and ids doesn't match"
     
     selected={"texts":[], "labels":[], "sent_ids":[]}
     rec=dict()
@@ -155,11 +197,12 @@ def sample_sentence_selection(dict_txt_label, category_selection_ratio, selectin
             selected["labels"].append(lb)
             selected["sent_ids"].append(sid)
     
+    print(rec)
     for lb, ltxt in rec.items():
         rate=category_selection_ratio[lb]
         selected_sentences=selecting_function(ltxt, rate)
-        selected["text"]+=[e[0] for e in selected_sentences]
-        selected["label"]+=[lb]*len(selected_sentences)
+        selected["texts"]+=[e[0] for e in selected_sentences]
+        selected["labels"]+=[lb]*len(selected_sentences)
         selected["sent_ids"]+=[e[1] for e in selected_sentences]
     
     return selected
