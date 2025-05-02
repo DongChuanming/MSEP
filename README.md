@@ -18,7 +18,8 @@ The following scheme shows the structure of modules in the package, and for whic
     
     ./src
     ├── ...
-    ├── msep                    
+    ├── msep
+    │   ├── preprocessing ...................................... Segment into Sentences (P2)
     │   ├── preannotation_rules ................................ Pre-annotation (D1) & Performance Comparison and Assessment (C4)
     │   ├── data_selection ..................................... Filter Sentences (D2)         
     │   ├── manual_annotation_utils ............................ Manual Annotation & Correction
@@ -40,7 +41,35 @@ Here is an example of how the pipeline is constructed step by step.
 
 ### 1. Preprocessing (P2)
 
-The goal is mainly segmente the text in medical documents into sentences. Use model of your choice to realise this step. Our team also developped a package to realise the text preprocessing based on the quality of our text resources : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
+The goal is mainly segmente the text in medical documents into sentences. Use model of your choice to realise this step. 
+If you want to use spaCy to perform sentence segmentation, and have installed its corresponding language models (ex. fr_dep_news_trf for French), the module _preprocessing_ can facilitate the process :
+```
+from preprocessing import sentence_segmentation
+
+sentence_list = sentence_segmentation("test.txt", "fr_dep_news_trf")
+```
+The function takes a text file and returns a list of sengmented sentences, using the spaCy model indicated in the arguments. 
+You can indicate an output file to save the segmented sentences:
+```
+from preprocessing import sentence_segmentation
+
+sentence_list = sentence_segmentation("test.txt", "fr_dep_news_trf", output="output.txt")
+```
+The function can also take a folder (ex. test) containing multiple text files and returns a list of sengmented sentences, and you can indicate an output folder (ex. output) to save the output files containing segmented sentences:
+
+```
+from preprocessing import sentence_segmentation
+
+sentence_list = sentence_segmentation("test", "fr_dep_news_trf", output="output")
+```
+You can also uniform the sentences into a cleaner format, i.e. lower case and no diacritics :
+```
+from preprocessing import sentence_segmentation
+
+sentence_list = sentence_segmentation("test", "fr_dep_news_trf", output="output", uniform=True)
+```
+
+Our team also developped a package to realise the text preprocessing that can be directly applied to database parquet files : https://gitlab.com/ltsi-dms/data-science/recherche-developpement/segmentation-de-phrases.git
 
 ### 2. Pre-annotation (D1)
 
@@ -92,7 +121,7 @@ label = preannotate_any(your_sentence, your_list_of_keywords, list_neg=your_list
 All prefix end with a space " ", and all suffix begin with a space " ".
 
 
-### 3.Sentence slection (D2)
+### 3.Filter Sentences (D2)
 
 First, you need to learn the sample density in your data to decide wether it is necessary to filter out non-sample sentences to increase sample density.
 
@@ -133,7 +162,7 @@ seletced_sentences=sample_sentence_selection(pre-annotated_sentences, category_s
 ```
 In this cas, in argument "category_selection_ratio" you should indicate the exact number of sentences to select for a medical status instead of proportion.
 
-### 4.Manual annotation (M1)
+### 4.Annotation by Medical Specialists (M1)
 
 Format your selected pre-annotated sentences according to the format of your chosen manual annotation tool. 
 
@@ -147,7 +176,7 @@ from msep.manual_annotation_utils import prodigy_input_generator
 prodigy_input_generator(dict_txt_label, path_to_output_file)
 
 ```
-Using prodigy interface, the annotators assess one sentence at a time, and classify it into corresponding status. To initiate a Prodigy interface for sentence classification, you need to define a recipy that configures the page of annotation. You'll find in folder "src/msep" a file named "prodigy_recipe_example.py", which is a template for a prodigy sentenc classification interface for medical status annotation. Here is an example of the command line that initiate the prodigy interface that calls the recipy:
+Using prodigy interface, the annotators assess one sentence at a time, and classify it into corresponding status. To initiate a Prodigy interface for sentence classification, you need to define a recipy that configures the page of annotation. You'll find in folder "examples" a file named "prodigy_recipe_example.py", which is a template for a prodigy sentenc classification interface for medical status annotation. Here is an example of the command line that initiate the prodigy interface that calls the recipy:
 
 ```
 prodigy ID_of_recipe name_of_your_database_for_saving_annotation ./input_file.jsonl -F ./prodigy_recipe_example.py
@@ -161,7 +190,7 @@ prodigy db-out name_of_your_database_for_saving_annotation > output_file_path_an
 ```
 For more information about the Prodigy annotation interface, please visite https://prodi.gy/
 
-Once manual annotation is finished, the annotation result can be read by the function "read_annotated_result"
+Once manual annotation is finished, the annotation result can be read by the function _read_annotated_result_
 
 ```
 from msep.manual_annotation_utils import read_annotated_result
@@ -169,8 +198,8 @@ from msep.manual_annotation_utils import read_annotated_result
 annotation=read_annotated_result(path_to_annotated_file)
 
 ```
-### 5.Automatic conflictual annotation detection (M2)
-You can calculate the inter-annotator agreements using "cohen_kappa_annotator_agreement" if you have two annotators who annotated the same sentences
+### 5.Calculate Inter-annotator Agreement (M2)
+You can calculate the inter-annotator agreements using _cohen_kappa_annotator_agreement_ if you have two annotators who annotated the same sentences
 
 ```
 from msep.manual_annotation_utils import cohen_kappa_annotator_agreement
@@ -179,9 +208,10 @@ agreement_score = cohen_kappa_annotator_agreement(annotation_file1, annotation_f
 
 ```
 
-it returns the score, and a list containing the differences of the annotation results
+it returns the agreement score, and a list of sentences annotated differently by annotators (the disagreements), which are required for _Disagreement Analysis_ (M3) step. 
 
-### 6.Semi-automatic harmonisation (M4)
+
+### 6.Annotation Correction (M4)
 If you want to correct the result by adding sentences with key words that shoud have been considered as medical status samples (provide a list of key words "ajout"), or delete sentences with false key words that should have not be considered as samples (provide a list of key words "supprime"), use the function "correction"
 
 ```
@@ -190,9 +220,9 @@ from msep.manual_annotation_utils import correction
 corrected_annotation = correction(annotation_to_be_corrected, ajout, supprime)
 
 ```
+The argument _annotation_to_be_corrected_ takes the same format of the output of function _read_annotated_result_, which is a list of dictionaries.
 
-
-### 7.Training & validating datasets partition (C1,C2)
+### 7.Split Data into N Groups (C1) & Train/Fine-tune Model (C2)
 To generate the training & validating datasets for cross validation, first, the annotated sentences need to be grouped by status
 
 ```
@@ -201,7 +231,7 @@ from msep.cross_validation import data_grouping_by_status
 data=data_grouping_by_status(corrected_annotation)
 
 ```
-it takes the annotation result (read from jsonl file) and returns a list containing a list of sentences for each status. In the out list, the medical status' sentence lists are listed in this order : [indifference, absence, presence, former]
+it takes the annotation result (read from jsonl file) and returns a list containing a list of sentences for each status. In the output list, the lists of sentences are ordered according to the medical status, following this order : [indifference, absence, presence, former]
 
 Then, we split, for each status, the sentences into n equal sets, n = the number of sessions of your cross validation process
 
@@ -212,7 +242,7 @@ all_rec=stratified_data_split(n, data)
 
 ```
 
-Use the function "save_training_validating_datasets" to assamble these sets into training & validating datasets for each session of cross validation, and save them into an indicated folder for later use 
+Use the function _save_training_validating_datasets_ to assamble these sets into training & validating datasets for each session of cross validation, and save them into an indicated folder for later use 
 
 ```
 from msep.cross_validation import save_training_validating_datasets

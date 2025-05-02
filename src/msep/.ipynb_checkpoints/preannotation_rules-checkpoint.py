@@ -3,14 +3,18 @@ import spacy
 import unicodedata
 import unidecode
 import re
+from preprocessing import uniform_sentence
 
 
 # output labels explination : 0=indifferent, 1=absence, 2=presence, 3=former
 
 ## Extraction of smoking status
 
+
+
+
 def preannotate_taba(text):
-    text=unidecode.unidecode(text.strip().lower())
+    text=uniform_sentence(text)
     smoking_label = '0'
     smoking_status = 'indifferent_sentence'
     nlp_explain = None
@@ -89,7 +93,7 @@ def preannotate_taba(text):
 # preannotate family history of cancer
 
 def preannotate_fam(text):
-    text=unidecode.unidecode(text.strip().lower())
+    text=uniform_sentence(text)
     tumor_family = None
     cancer_history="0"
     family=False
@@ -298,8 +302,9 @@ for a in list_hyper:
 
 
 def preannotate_hyper(sent):
-    sent=unidecode.unidecode(sent.strip().lower())
+    sent=uniform_sentence(sent)
     hyper="0"
+    nsent=" "+sent+" "
     for p in patterns_neg_hyper:
         pat=re.compile("\W+"+p+"s?\W+")
         #if " "+p+" " in " "+sent+" ":
@@ -330,7 +335,7 @@ for a in list_diab:
 def preannotate_diab(sent):
     #patterns_neg=["pas diabetique", "pas de diabete", "absence de diabete", "absence diabete", ]
     #patterns_pos=["diabete", "DNID", "DID", "DT2", diabete de type OR diabetique"]
-    sent=unidecode.unidecode(sent.strip().lower())
+    sent=uniform_sentence(sent)
     diab="0"
     nsent=" "+sent+" " 
     for p in patterns_neg_diab:
@@ -358,7 +363,7 @@ for a in list_cardia:
         patterns_neg_cardia.append(a+c)
 
 def preannotate_cardia(sent):
-    sent=unidecode.unidecode(sent.strip().lower())
+    sent=uniform_sentence(sent)
     cardia="0"
     nsent=" "+sent+" " 
     for p in patterns_neg_cardia:
@@ -399,7 +404,7 @@ for a in list_copd:
 #sortir en str -, 0, 1,  qui représentent respectivement "phrase indifférente pour COPD", "pas de COPD" et "avoir COPD"
 
 def preannotate_copd(sent):
-    sent=unidecode.unidecode(sent.strip().lower())
+    sent=uniform_sentence(sent)
     copd="0"
     nsent=" "+sent+" " 
     for p in patterns_neg_copd:
@@ -430,7 +435,7 @@ def preannotate_any(sent, list_keywords, list_neg=list_neg, list_neg_post=list_n
         for c in list_neg_post:
             patterns_neg_any.append(a+c)
     
-    sent=unidecode.unidecode(sent.strip().lower())
+    sent=uniform_sentence(sent)
     label="0"
     nsent=" "+sent+" " 
     for p in patterns_neg_any:

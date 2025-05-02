@@ -1,0 +1,6 @@
+Ceci est une test.
+C'est pour tester la performance de MSEP.
+J'ai préparé 3 phrases:
+cigarette 3 paquets/jour.
+Pas d'intoxication tabagique.
+Tabagisme sevré il y a 3 ans.
